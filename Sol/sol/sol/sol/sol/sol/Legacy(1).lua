@@ -296,13 +296,13 @@ do
         end)
         if not ok then
             game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "OMG SKID GAYY",
-                Text = "Nigger detected — auto kick in 3s",
+                Title = "Script Hook Detected",
+                Text = "Executor hook detected — auto kick in 3s",
                 Duration = 3,
             })
             task.wait(3)
             pcall(function()
-                game:GetService("Players").LocalPlayer:Kick("OMG SKID GAYY - auto kick: Nigger Dont kill yourself")
+                game:GetService("Players").LocalPlayer:Kick("Script Hook Detected — auto kick")
             end)
         end
     end)
@@ -392,11 +392,11 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main     = Window:AddTab({ Title = "| Main",           Icon = "rbxassetid://7733960981"  }),
-    Combat   = Window:AddTab({ Title = "| Combat",         Icon = "rbxassetid://10734975692" }),
-    Movement = Window:AddTab({ Title = "| Movement & Misc", Icon = "rbxassetid://7734068321"  }),
-    Visual   = Window:AddTab({ Title = "| Visual",         Icon = "rbxassetid://10709819149" }),
-    Settings = Window:AddTab({ Title = "| Settings",       Icon = "rbxassetid://7734052335"  }),
+    Main      = Window:AddTab({ Title = "| Main",            Icon = "rbxassetid://7733960981"  }),
+    Combat    = Window:AddTab({ Title = "| Combat",          Icon = "rbxassetid://10734975692" }),
+    Movement  = Window:AddTab({ Title = "| Movement & Misc", Icon = "rbxassetid://7734068321"  }),
+    Visual    = Window:AddTab({ Title = "| Visual",          Icon = "rbxassetid://10709819149" }),
+    Settings  = Window:AddTab({ Title = "| Settings",        Icon = "rbxassetid://7734052335"  }),
 }
 
 local Options = Fluent.Options
@@ -1098,11 +1098,11 @@ if not getgenv().ButtonTransparency then
     }
 end
 
--- Transparansi bertahap per-value:
--- 0–10   : semua normal (background, stroke, text = 0)
--- 11–30  : background naik pelan (0 → 0.5), stroke & text tetap normal
--- 31–60  : background naik (0.5 → 0.85), stroke mulai naik (0 → 0.5)
--- 61–100 : semua naik, text mulai fade (0 → 1), stroke naik ke 1
+-- Stepped transparency per value:
+-- 0–10   : all normal (background, stroke, text = 0)
+-- 11–30  : background rises slowly (0 → 0.5), stroke & text stay normal
+-- 31–60  : background rises (0.5 → 0.85), stroke starts rising (0 → 0.5)
+-- 61–100 : all rise, text starts fading (0 → 1), stroke rises to 1
 local function _applyBtnTrans(buttonName, raw)
     local v = math.clamp(tonumber(raw) or 0, 0, 100)
     local bg, stroke, text, toggle
@@ -2486,6 +2486,7 @@ local Dropdown = Tabs.Main:AddDropdown("RespawnType", {
     Title   = "Respawn Type",
     Values  = { "Spawnpoint", "Fake Revive" },
     Multi   = false,
+    Search  = false,
     Default = 1,
 })
 
@@ -2510,7 +2511,7 @@ Toggle:OnChanged(function(State)
 end)
 
 Tabs.Main:AddKeybind("AutoRespawnKeybind", {
-    Title = "Auto Respawn Keybind", Mode = "Toggle", Default = "R",
+    Title = "Auto Respawn Keybind", Mode = "Toggle", Default = "",
     Callback = function(Value)
         DConfiguration.Main.AutoRespawn = Value
         if Value then
@@ -2782,7 +2783,7 @@ do
     Tabs.Main:AddKeybind("FlyKeybind", {
         Title    = "Fly Keybind",
         Mode     = "Toggle",
-        Default  = "F",
+        Default  = "",
         Callback = function(Value)
             toggleFly(Value)
         end,
@@ -2808,6 +2809,7 @@ local Dropdown = Tabs.Combat:AddDropdown("AntiBotTeleport", {
     Title   = "Anti Nextbot Teleport Type",
     Values  = { "Spawn", "Players" },
     Multi   = false,
+    Search  = false,
     Default = 1,
 })
 
@@ -2827,7 +2829,7 @@ Tabs.Combat:AddInput("NextbotDistance", {
 })
 
 Tabs.Combat:AddKeybind("AntiNextbotKeybind", {
-    Title = "Anti Nextbot Keybind", Mode = "Toggle", Default = "N",
+    Title = "Anti Nextbot Keybind", Mode = "Toggle", Default = "",
     Callback = function(Value)
         DConfiguration.Combat.AntiNextbot = Value
         if Value then
@@ -2896,6 +2898,20 @@ Tabs.Movement:AddInput("AirAcceleration", {
     end,
 })
 
+Tabs.Movement:AddInput("IGS_FieldOfView", {
+    Title       = "Field Of View",
+    Default     = "70",
+    Placeholder = "70",
+    Numeric     = false,
+    Finished    = false,
+    Callback    = function(v)
+        local n = tonumber(v) or 70
+        local s = game:GetService("Players").LocalPlayer:FindFirstChild("Settings")
+        local p = s and s:FindFirstChild("FieldOfView")
+        if p then p.Value = n end
+    end,
+})
+
 Tabs.Movement:AddSpace()
 
 local Toggle = Tabs.Movement:AddToggle("PlayerJumpPower", { Title = "Jump Power Toggle", Default = false })
@@ -2957,94 +2973,6 @@ Tabs.Movement:AddInput("PlayerWalkCf", {
     end,
 })
 
--- In-Game Settings (path: Players.LocalPlayer.Settings)
-
-do
-    local function getSetting(name)
-        local s = game:GetService("Players").LocalPlayer:FindFirstChild("Settings")
-        return s and s:FindFirstChild(name)
-    end
-    local function setBool(name, v)
-        local p = getSetting(name)
-        if p then p.Value = v end
-    end
-    local function setNumber(name, v)
-        local p = getSetting(name)
-        if p then p.Value = v end
-    end
-
-    -- Keep values in sync if the module resets them
-    local _overrides = {}
-    RunService.Heartbeat:Connect(function()
-        for name, val in pairs(_overrides) do
-            local p = getSetting(name)
-            if p and p.Value ~= val then p.Value = val end
-        end
-    end)
-
-    Tabs.Movement:AddSection("In-Game Settings")
-
-    -- Graphics group
-    for _, name in ipairs({"FPShadows", "LowQuality", "Shadows"}) do
-        local t = Tabs.Movement:AddToggle("IGS_" .. name, { Title = name, Default = false })
-        t:OnChanged(function(State)
-            _overrides[name] = State
-            setBool(name, State)
-        end)
-    end
-
-    Tabs.Movement:AddInput("IGS_FieldOfView", {
-        Title = "FieldOfView", Default = "70", Placeholder = "70",
-        Numeric = false, Finished = false,
-        Callback = function(v)
-            local n = tonumber(v) or 70
-            _overrides["FieldOfView"] = n
-            setNumber("FieldOfView", n)
-        end,
-    })
-
-    Tabs.Movement:AddSpace()
-
-    -- Audio group
-    for _, name in ipairs({"BoomboxEnabled"}) do
-        local t = Tabs.Movement:AddToggle("IGS_" .. name, { Title = name, Default = false })
-        t:OnChanged(function(State)
-            _overrides[name] = State
-            setBool(name, State)
-        end)
-    end
-
-    Tabs.Movement:AddInput("IGS_EmoteVolume", {
-        Title = "EmoteVolume", Default = "1", Placeholder = "0–1",
-        Numeric = false, Finished = false,
-        Callback = function(v)
-            local n = tonumber(v) or 1
-            _overrides["EmoteVolume"] = n
-            setNumber("EmoteVolume", n)
-        end,
-    })
-    Tabs.Movement:AddInput("IGS_Music", {
-        Title = "Music Volume", Default = "1", Placeholder = "0–1",
-        Numeric = false, Finished = false,
-        Callback = function(v)
-            local n = tonumber(v) or 1
-            _overrides["Music"] = n
-            setNumber("Music", n)
-        end,
-    })
-
-    Tabs.Movement:AddSpace()
-
-    -- Gameplay group
-    for _, name in ipairs({"CanBeCarried", "Jumpscares", "Ragdolls", "SprintViewmodels"}) do
-        local t = Tabs.Movement:AddToggle("IGS_" .. name, { Title = name, Default = false })
-        t:OnChanged(function(State)
-            _overrides[name] = State
-            setBool(name, State)
-        end)
-    end
-end
-
 Tabs.Movement:AddSection("Cola & Leaderboard")
 
 Tabs.Movement:AddSpace()
@@ -3094,7 +3022,7 @@ Tabs.Movement:AddInput("ColaButtonTrans", {
 Tabs.Movement:AddKeybind("ColaKeybind", {
     Title    = "Cola Keybind",
     Mode     = "Toggle",
-    Default  = "F",
+    Default  = "",
     Callback = function(Value)
         if Value then DFunctions.UseCola() end
     end,
@@ -3146,7 +3074,7 @@ Tabs.Movement:AddInput("LeaderboardButtonTrans", {
 Tabs.Movement:AddKeybind("LeaderboardKeybind", {
     Title    = "Leaderboard Keybind",
     Mode     = "Toggle",
-    Default  = "Tab",
+    Default  = "",
     Callback = function(Value)
         if Value then
             pcall(function()
@@ -3242,6 +3170,7 @@ local Dropdown = Tabs.Movement:AddDropdown("LagMode", {
     Title   = "Lag Mode",
     Values  = { "Normal", "Demon", "FastFlag" },
     Multi   = false,
+    Search  = false,
     Default = 1,
 })
 
@@ -3251,8 +3180,8 @@ end)
 
 Tabs.Movement:AddKeybind("LagSwitchKeybind", {
     Title    = "Lag Switch Keybind",
-    Mode     = "Hold",
-    Default  = "L",
+    Mode     = "Toggle",
+    Default  = "",
     Callback = function(Value)
         if Value then
             task.spawn(function()
@@ -3435,8 +3364,8 @@ end)
 
 Tabs.Movement:AddKeybind("MacroKeybind", {
     Title    = "Macro Button 1 Keybind",
-    Mode     = "Hold",
-    Default  = "Q",
+    Mode     = "Toggle",
+    Default  = "",
     Callback = function(Value)
         if Value then
             pcall(function()
@@ -3450,7 +3379,7 @@ Tabs.Movement:AddKeybind("MacroKeybind", {
 Tabs.Movement:AddKeybind("MacroCrouchKeybind", {
     Title    = "Macro Button 2 Keybind (Crouch)",
     Mode     = "Toggle",
-    Default  = "C",
+    Default  = "",
     Callback = function(Value)
         pcall(function()
             LocalPlayer.Character.Communicator:InvokeServer("Crouching", Value)
@@ -3496,6 +3425,7 @@ local Dropdown = Tabs.Movement:AddDropdown("SelectionEmoteSlot", {
     Title   = "Select Emote Slots",
     Values  = { "1", "2", "3", "4", "5", "6" },
     Multi   = false,
+    Search  = false,
     Default = 1,
 })
 
@@ -3571,7 +3501,7 @@ Tabs.Movement:AddInput("EmoteSlotButtonTrans", {
 Tabs.Movement:AddKeybind("EmoteSlotKeybind", {
     Title    = "Emote Slot Keybind",
     Mode     = "Toggle",
-    Default  = "E",
+    Default  = "",
     Callback = function(Value)
         if Value then
             pcall(function()
@@ -3584,9 +3514,21 @@ Tabs.Movement:AddKeybind("EmoteSlotKeybind", {
 Tabs.Movement:AddSection("Auto Crouch")
 
 do
-    local _acEnabled  = false
-    local _acDelay    = 0.3
-    local _acThread   = nil
+    local _acEnabled = false
+    local _acDelay   = 0.3
+    local _acMode    = "Rapid"
+    local _acThread  = nil
+
+    local function stopAutoCrouch()
+        _acEnabled = false
+        if _acThread then task.cancel(_acThread); _acThread = nil end
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Communicator") then
+                char.Communicator:InvokeServer("Crouching", false)
+            end
+        end)
+    end
 
     local function startAutoCrouch()
         if _acThread then task.cancel(_acThread) end
@@ -3594,10 +3536,21 @@ do
             while _acEnabled do
                 pcall(function()
                     local char = LocalPlayer.Character
-                    if char and char:FindFirstChild("Communicator") then
-                        char.Communicator:InvokeServer("Crouching", true)
+                    if not char then return end
+                    local comm = char:FindFirstChild("Communicator")
+                    local hum  = char:FindFirstChildOfClass("Humanoid")
+                    if not comm or not hum then return end
+
+                    if _acMode == "Rapid" then
+                        comm:InvokeServer("Crouching", true)
                         task.wait(_acDelay)
-                        char.Communicator:InvokeServer("Crouching", false)
+                        comm:InvokeServer("Crouching", false)
+                    elseif _acMode == "Ground" then
+                        comm:InvokeServer("Crouching", hum.FloorMaterial ~= Enum.Material.Air)
+                    elseif _acMode == "Air" then
+                        comm:InvokeServer("Crouching", hum.FloorMaterial == Enum.Material.Air)
+                    elseif _acMode == "Hold" then
+                        comm:InvokeServer("Crouching", true)
                     end
                 end)
                 task.wait(_acDelay)
@@ -3615,19 +3568,22 @@ do
                 function(btn)
                     _acEnabled = not _acEnabled
                     btn.Text   = _acEnabled and "Auto Crouch: ON" or "Auto Crouch: OFF"
-                    if _acEnabled then
-                        startAutoCrouch()
-                    else
-                        if _acThread then task.cancel(_acThread) end
-                    end
+                    if _acEnabled then startAutoCrouch() else stopAutoCrouch() end
                 end,
                 nil, "Auto Crouch")
         else
-            _acEnabled = false
-            if _acThread then task.cancel(_acThread) end
+            stopAutoCrouch()
             DFunctions.DestroyButton("AutoCrouchBtn")
         end
     end)
+
+    Tabs.Movement:AddDropdown("AutoCrouchMode", {
+        Title   = "Crouch Mode",
+        Values  = { "Rapid", "Ground", "Air", "Hold" },
+        Multi   = false,
+        Search  = false,
+        Default = 1,
+    }):OnChanged(function(Value) _acMode = Value end)
 
     Tabs.Movement:AddInput("AutoCrouchDelay", {
         Title       = "Crouch Interval (seconds)",
@@ -3635,9 +3591,7 @@ do
         Placeholder = "0.3",
         Numeric     = false,
         Finished    = false,
-        Callback    = function(Value)
-            _acDelay = tonumber(Value) or 0.3
-        end,
+        Callback    = function(Value) _acDelay = tonumber(Value) or 0.3 end,
     })
 
     Tabs.Movement:AddInput("AutoCrouchGuiSize", {
@@ -3667,20 +3621,10 @@ do
     Tabs.Movement:AddKeybind("AutoCrouchKeybind", {
         Title    = "Auto Crouch Keybind",
         Mode     = "Toggle",
-        Default  = "V",
+        Default  = "",
         Callback = function(Value)
             _acEnabled = Value
-            if Value then
-                startAutoCrouch()
-            else
-                if _acThread then task.cancel(_acThread) end
-                pcall(function()
-                    local char = LocalPlayer.Character
-                    if char and char:FindFirstChild("Communicator") then
-                        char.Communicator:InvokeServer("Crouching", false)
-                    end
-                end)
-            end
+            if Value then startAutoCrouch() else stopAutoCrouch() end
         end,
     })
 end
@@ -3702,6 +3646,7 @@ local Dropdown = Tabs.Movement:AddDropdown("SprintEmoteType", {
     Title   = "Aggressive Emote Type",
     Values  = { "Legit", "Blatant" },
     Multi   = false,
+    Search  = false,
     Default = 2,
 })
 
@@ -3846,7 +3791,7 @@ Tabs.Movement:AddInput("GravityAdjust", {
 Tabs.Movement:AddKeybind("GravityKeybind", {
     Title    = "Gravity Keybind",
     Mode     = "Toggle",
-    Default  = "H",
+    Default  = "",
     Callback = function(Value)
         DConfiguration.Misc.MovementModification.Gravity.Keybind        = Value
         DConfiguration.Misc.MovementModification.Gravity.FloatingButton = Value
@@ -3947,6 +3892,7 @@ local Dropdown = Tabs.Movement:AddDropdown("BHOPVersion", {
     Title   = "Select BHOP Version",
     Values  = { "Acceleration", "Ground Acceleration", "No Acceleration" },
     Multi   = false,
+    Search  = false,
     Default = 1,
 })
 
@@ -3958,6 +3904,7 @@ local Dropdown = Tabs.Movement:AddDropdown("JumpType", {
     Title   = "Select Jump Type",
     Values  = { "Simulated", "Realistic", "Nil" },
     Multi   = false,
+    Search  = false,
     Default = 1,
 })
 
@@ -3998,7 +3945,7 @@ Tabs.Movement:AddInput("BHOPMaxSpeed", {
 Tabs.Movement:AddKeybind("BHOPKeybind", {
     Title    = "BHOP Keybind",
     Mode     = "Toggle",
-    Default  = "J",
+    Default  = "",
     Callback = function(Value)
         DConfiguration.Misc.MovementModification.BHOP.Keybind = Value
         DConfiguration.Misc.MovementModification.BHOP.Enabled = Value
@@ -4093,7 +4040,7 @@ do
         end)
 
     Tabs.Movement:AddDropdown("EdgeTrimpMode", {
-        Title = "Edge Trimp Mode", Values = {"Legit","Simulated"}, Multi = false, Default = 1,
+        Title = "Edge Trimp Mode", Values = {"Legit","Simulated"}, Multi = false, Search = false, Default = 1,
     }):OnChanged(function(Value) _ET.Mode = Value end)
 
     Tabs.Movement:AddInput("EdgeBounce",     { Title = "Simulated Multiplier", Default = "4",   Placeholder = "4",   Numeric = false, Finished = false, Callback = function(v) _ET.BounceMultiplier = tonumber(v) or 4   end })
@@ -4101,7 +4048,7 @@ do
     Tabs.Movement:AddInput("EdgeThreshold",  { Title = "Fall Threshold",       Default = "30",  Placeholder = "30",  Numeric = false, Finished = false, Callback = function(v) _ET.FallThreshold    = tonumber(v) or 30  end })
 
     Tabs.Movement:AddKeybind("EdgeTrimpKeybind", {
-        Title = "Edge Trimp Keybind", Mode = "Toggle", Default = "E",
+        Title = "Edge Trimp Keybind", Mode = "Toggle", Default = "",
         Callback = function(Value) _ET.Enabled = Value end,
     })
 end
@@ -4114,14 +4061,24 @@ Toggle:OnChanged(function(State)
     DConfiguration.Misc.AntiLags.Low = State
 
     if State then
+        local chars = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character then chars[p.Character] = true end
+        end
         for _, v in pairs(game:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                v.Lifetime = NumberRange.new(0)
-            elseif v:IsA("Explosion") then
-                v.BlastPressure = 1
-                v.BlastRadius   = 1
-            elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
-                v.Enabled = false
+            local skip = false
+            for c in pairs(chars) do
+                if v:IsDescendantOf(c) then skip = true; break end
+            end
+            if not skip then
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    v.Lifetime = NumberRange.new(0)
+                elseif v:IsA("Explosion") then
+                    v.BlastPressure = 1
+                    v.BlastRadius   = 1
+                elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                    v.Enabled = false
+                end
             end
         end
     end
@@ -4135,17 +4092,27 @@ Toggle:OnChanged(function(State)
     DConfiguration.Misc.AntiLags.Moderate = State
 
     if State then
+        local chars = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character then chars[p.Character] = true end
+        end
         for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") and not v:IsA("MeshPart") then
-                v.Material    = "Plastic"
-                v.Reflectance = 0
-            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                v.Lifetime = NumberRange.new(0)
-            elseif v:IsA("Explosion") then
-                v.BlastPressure = 1
-                v.BlastRadius   = 1
-            elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
-                v.Enabled = false
+            local skip = false
+            for c in pairs(chars) do
+                if v:IsDescendantOf(c) then skip = true; break end
+            end
+            if not skip then
+                if v:IsA("BasePart") and not v:IsA("MeshPart") then
+                    v.Material    = "Plastic"
+                    v.Reflectance = 0
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    v.Lifetime = NumberRange.new(0)
+                elseif v:IsA("Explosion") then
+                    v.BlastPressure = 1
+                    v.BlastRadius   = 1
+                elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                    v.Enabled = false
+                end
             end
         end
         for i = 1, #Lighting:GetChildren() do
@@ -4171,7 +4138,18 @@ Toggle:OnChanged(function(State)
     if State then
         local w = workspace
         local l = Lighting
+        local chars = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character then chars[p.Character] = true end
+        end
+        local function isChar(v)
+            for c in pairs(chars) do
+                if v:IsDescendantOf(c) then return true end
+            end
+            return false
+        end
         for _, v in pairs(w:GetDescendants()) do
+            if isChar(v) then continue end
             if v:IsA("BasePart") and not v:IsA("MeshPart") then
                 v.Material    = "Plastic"
                 v.Reflectance = 0
@@ -4187,13 +4165,8 @@ Toggle:OnChanged(function(State)
             elseif v:IsA("MeshPart") and decalsyeeted then
                 v.Material    = "Plastic"
                 v.Reflectance = 0
-                v.TextureID   = 10385902758728957
             elseif v:IsA("SpecialMesh") and decalsyeeted then
                 v.TextureId = 0
-            elseif v:IsA("ShirtGraphic") and decalsyeeted then
-                v.Graphic = 0
-            elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
-                v[v.ClassName .. "Template"] = 0
             end
         end
         for i = 1, #l:GetChildren() do
@@ -4204,11 +4177,12 @@ Toggle:OnChanged(function(State)
             end
         end
         w.DescendantAdded:Connect(function(v)
-            wait(1)
+            task.wait(1)
+            if isChar(v) then return end
             if v:IsA("BasePart") and not v:IsA("MeshPart") then
                 v.Material    = "Plastic"
                 v.Reflectance = 0
-            elseif v:IsA("Decal") or v:IsA("Texture") and decalsyeeted then
+            elseif (v:IsA("Decal") or v:IsA("Texture")) and decalsyeeted then
                 v.Transparency = 1
             elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
                 v.Lifetime = NumberRange.new(0)
@@ -4220,13 +4194,8 @@ Toggle:OnChanged(function(State)
             elseif v:IsA("MeshPart") and decalsyeeted then
                 v.Material    = "Plastic"
                 v.Reflectance = 0
-                v.TextureID   = 10385902758728957
             elseif v:IsA("SpecialMesh") and decalsyeeted then
                 v.TextureId = 0
-            elseif v:IsA("ShirtGraphic") and decalsyeeted then
-                v.ShirtGraphic = 0
-            elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
-                v[v.ClassName .. "Template"] = 0
             end
         end)
     end
@@ -4284,9 +4253,20 @@ local function ChangeEmotes(Name1, Name2)
         local I = Emotes:FindFirstChild(RealName1)
         local V = Emotes:FindFirstChild(RealName2)
         if I and V then
-            I.Name = RealName2
+            local modI  = I:FindFirstChild("EmoteModule")
+            local modV  = V:FindFirstChild("EmoteModule")
+            local modCI = I:FindFirstChild("EmoteModuleClassic")
+            local modCV = V:FindFirstChild("EmoteModuleClassic")
+            if modI  then modI.Parent  = Folder end
+            if modCI then modCI.Parent = Folder end
+            if modV  then modV.Parent  = I end
+            if modCV then modCV.Parent = I end
+            local n1, n2 = I.Name, V.Name
+            I.Name = n2
             task.wait()
-            V.Name = RealName1
+            V.Name = n1
+            if modI  then modI.Parent  = V end
+            if modCI then modCI.Parent = V end
         end
     end
 end
@@ -4388,7 +4368,7 @@ do
     end
 end
 
--- Crosshair (ported from PhantomWyrm)
+-- Crosshair (ported from SolasmotaryX)
 
 Tabs.Visual:AddSection("Crosshair")
 
@@ -4562,12 +4542,13 @@ do
         return list
     end
 
+    local _ndcList = NDC_getList()
     local NDC_Dropdown = Tabs.Visual:AddDropdown("NextbotDecalDropdown", {
         Title   = "Select Nextbot(s)",
-        Values  = NDC_getList(),
+        Values  = _ndcList,
         Multi   = true,
         Default = {},
-        Search  = true,
+        Search  = (#_ndcList > 10),
     })
     NDC_Dropdown:OnChanged(function(Value)
         NDC_selectedBots = Value
@@ -4619,6 +4600,246 @@ do
 end
 
 
+
+do
+    Tabs.Visual:AddSection("Skybox")
+
+    local SkyboxFaces = {
+        { prop = "SkyboxBk", label = "Slot 1 — Back   (Bk)" },
+        { prop = "SkyboxFt", label = "Slot 2 — Front  (Ft)" },
+        { prop = "SkyboxLf", label = "Slot 3 — Left   (Lf)" },
+        { prop = "SkyboxRt", label = "Slot 4 — Right  (Rt)" },
+        { prop = "SkyboxUp", label = "Slot 5 — Top    (Up)" },
+        { prop = "SkyboxDn", label = "Slot 6 — Bottom (Dn)" },
+    }
+    local SkyboxValues = {}
+    for _, face in ipairs(SkyboxFaces) do
+        SkyboxValues[face.prop] = ""
+        Tabs.Visual:AddInput("SkyIn_" .. face.prop, {
+            Title       = face.label,
+            Placeholder = "https://... or rbxasset://...",
+            Numeric     = false,
+            Finished    = false,
+            Callback    = function(Value) SkyboxValues[face.prop] = Value end,
+        })
+    end
+
+    local function ApplyCustomSkybox()
+        local LightingSvc = game:GetService("Lighting")
+        for _, v in pairs(LightingSvc:GetChildren()) do
+            if v:IsA("Sky") then v:Destroy() end
+        end
+        local Sky = Instance.new("Sky")
+        Sky.Name = "Sky"
+        Sky.CelestialBodiesShown = false
+        Sky.StarCount = 0
+        local applied, failed = 0, 0
+        if not isfolder("customsky") then makefolder("customsky") end
+        for _, face in ipairs(SkyboxFaces) do
+            local val = SkyboxValues[face.prop] or ""
+            if val ~= "" then
+                local ok, err = pcall(function()
+                    if val:sub(1, 4) == "http" then
+                        local fname = "customsky/Sky_" .. face.prop .. ".png"
+                        writefile(fname, game:HttpGet(val, true))
+                        Sky[face.prop] = getcustomasset(fname)
+                    else
+                        Sky[face.prop] = val
+                    end
+                end)
+                if ok then
+                    applied = applied + 1
+                else
+                    failed = failed + 1
+                    Fluent:Notify({ Title = "Skybox Error", Content = face.prop .. " failed: " .. tostring(err):sub(1, 60), Duration = 5 })
+                end
+            end
+        end
+        if applied > 0 then
+            Sky.Parent = LightingSvc
+            Fluent:Notify({ Title = "Skybox", Content = "Applied " .. applied .. "/6 face(s)" .. (failed > 0 and " | " .. failed .. " failed" or ""), Duration = 3 })
+        else
+            Sky:Destroy()
+            Fluent:Notify({ Title = "Skybox", Content = "All faces failed. Check your URLs.", Duration = 5 })
+        end
+    end
+
+    Tabs.Visual:AddButton({
+        Title       = "Apply Custom Skybox",
+        Description = "Supports https:// and rbxasset://",
+        Callback    = function() spawn(ApplyCustomSkybox) end,
+    })
+
+    Tabs.Visual:AddSection("")
+
+    local function _makeSkybox(folder, faces)
+        local LightingSvc = game:GetService("Lighting")
+        for _, v in pairs(LightingSvc:GetChildren()) do
+            if v:IsA("Sky") then v:Destroy() end
+        end
+        if not isfolder(folder) then makefolder(folder) end
+        local Sky = Instance.new("Sky")
+        Sky.Name = "Sky"
+        Sky.CelestialBodiesShown = false
+        Sky.StarCount = 0
+        local loaded = 0
+        for _, v in ipairs(faces) do
+            local path = folder .. "/" .. v.file
+            local ok, err = pcall(function()
+                if not isfile(path) then
+                    writefile(path, game:HttpGet(v.url, true))
+                end
+                Sky[v.prop] = getcustomasset(path)
+            end)
+            if ok then
+                loaded = loaded + 1
+            else
+                pcall(function() if isfile(path) then delfile(path) end end)
+                Fluent:Notify({ Title = "Skybox Error", Content = v.file .. " failed: " .. tostring(err):sub(1, 60), Duration = 5 })
+            end
+        end
+        if loaded > 0 then
+            Sky.Parent = LightingSvc
+            if loaded < #faces then
+                Fluent:Notify({ Title = "Skybox", Content = loaded .. "/" .. #faces .. " faces loaded", Duration = 4 })
+            end
+        else
+            Sky:Destroy()
+            Fluent:Notify({ Title = "Skybox", Content = "Failed to load all faces. Try again.", Duration = 5 })
+        end
+    end
+
+    local BuiltinSkyboxes = {
+        ["Hakari Hananozo"] = function()
+            _makeSkybox("hk", {
+                { prop = "SkyboxBk", url = "https://od.lk/d/NjNfOTg0NjEzMTVf/SkyBk.tex", file = "SkyBk.png" },
+                { prop = "SkyboxFt", url = "https://od.lk/s/NjNfOTg0NjEzMTdf/SkyFt.tex", file = "SkyFt.png" },
+                { prop = "SkyboxLf", url = "https://od.lk/s/NjNfOTg0NjEzMThf/SkyIf.tex", file = "SkyIf.png" },
+                { prop = "SkyboxRt", url = "https://od.lk/d/NjNfOTg0NjEzMTlf/SkyRt.tex", file = "SkyRt.png" },
+                { prop = "SkyboxUp", url = "https://od.lk/d/NjNfOTg0NjEzMjBf/SkyUp.tex", file = "SkyUp.png" },
+                { prop = "SkyboxDn", url = "https://od.lk/d/NjNfOTg0NjEzMTZf/Skydn.tex", file = "Skydn.png" },
+            })
+        end,
+        ["Xenovia Quarta"] = function()
+            _makeSkybox("Xenovia Quarta", {
+                { prop = "SkyboxLf", url = "https://od.lk/d/NjNfOTg0NjM0ODhf/if.png", file = "if.png" },
+                { prop = "SkyboxBk", url = "https://od.lk/d/NjNfOTg0NjM0ODlf/ft.png", file = "ft.png" },
+                { prop = "SkyboxDn", url = "https://od.lk/d/NjNfOTg0NjM0OTBf/dn.png", file = "dn.png" },
+                { prop = "SkyboxFt", url = "https://od.lk/d/NjNfOTg0NjM0OTFf/bk.png", file = "bk.png" },
+                { prop = "SkyboxUp", url = "https://od.lk/d/NjNfOTg0NjM0ODZf/up.png", file = "up.png" },
+                { prop = "SkyboxRt", url = "https://od.lk/d/NjNfOTg0NjM0ODdf/rt.png", file = "rt.png" },
+            })
+        end,
+    }
+
+    local _skyAutoApply = false
+    local SkyboxDropdown -- forward declare so _applySelectedSkybox can reference it
+
+    local function _applySelectedSkybox()
+        local selected = SkyboxDropdown and SkyboxDropdown.Value
+        local fn = selected and BuiltinSkyboxes[selected]
+        if fn then
+            fn()
+        else
+            Fluent:Notify({ Title = "Skybox", Content = "Select a skybox from the dropdown first.", Duration = 3 })
+        end
+    end
+
+    SkyboxDropdown = Tabs.Visual:AddDropdown("BuiltinSkyboxDrop", {
+        Title   = "Built-in Skybox",
+        Values  = { "Hakari Hananozo", "Xenovia Quarta" },
+        Multi   = false,
+        Search  = false,
+        Default = 1,
+    })
+    SkyboxDropdown:OnChanged(function()
+        if _skyAutoApply then _applySelectedSkybox() end
+    end)
+
+    Tabs.Visual:AddToggle("SkyAutoApplyToggle", {
+        Title       = "Auto Apply",
+        Description = "Automatically applies skybox when the dropdown changes",
+        Default     = false,
+        Callback    = function(Value)
+            _skyAutoApply = Value
+            if Value then _applySelectedSkybox() end
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Apply Built-in Skybox",
+        Description = "Skyboxes made by xThonyG",
+        Callback    = function() spawn(_applySelectedSkybox) end,
+    })
+
+    Tabs.Visual:AddParagraph({
+        Title   = "Built-in Skybox Credit",
+        Content = "Skyboxes made by xThonyG\nyoutube.com/@xThonyy",
+    })
+end
+
+do
+    Tabs.Visual:AddSection("Lighting")
+
+    local function _getLighting()
+        return game:GetService("Lighting")
+    end
+
+    Tabs.Visual:AddButton({
+        Title       = "Clear All Lighting Effects",
+        Description = "Removes Fog, Atmosphere, Bloom, Blur, DepthOfField, SunRays, ColorCorrection",
+        Callback    = function()
+            local L = _getLighting()
+            local removed = 0
+            for _, v in pairs(L:GetChildren()) do
+                if v:IsA("ColorCorrectionEffect")
+                or v:IsA("BloomEffect")  or v:IsA("BlurEffect")
+                or v:IsA("DepthOfFieldEffect") or v:IsA("SunRaysEffect") then
+                    v.Enabled = false
+                    removed = removed + 1
+                end
+            end
+            L.FogEnd   = 100000
+            L.FogStart = 0
+            Fluent:Notify({ Title = "Lighting", Content = "Removed " .. removed .. " effect(s) and reset fog.", Duration = 3 })
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Remove Fog",
+        Description = "Pushes FogEnd to maximum to make fog invisible",
+        Callback    = function()
+            local L = _getLighting()
+            L.FogEnd   = 100000
+            L.FogStart = 0
+            Fluent:Notify({ Title = "Lighting", Content = "Fog removed.", Duration = 3 })
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Remove Atmosphere",
+        Description = "Destroys the Atmosphere object from Lighting",
+        Callback    = function()
+            local L = _getLighting()
+            local found = false
+            for _, v in pairs(L:GetChildren()) do
+                if v:IsA("Atmosphere") then v:Destroy(); found = true end
+            end
+            Fluent:Notify({ Title = "Lighting", Content = found and "Atmosphere removed." or "No Atmosphere found.", Duration = 3 })
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Reset Lighting",
+        Description = "Restores default Roblox lighting values",
+        Callback    = function()
+            local L = _getLighting()
+            L.FogEnd   = 100000
+            L.FogStart = 0
+            Fluent:Notify({ Title = "Lighting", Content = "Lighting reset to defaults.", Duration = 3 })
+        end,
+    })
+end
 
 Tabs.Settings:AddButton({
     Title       = "Remove FPS Counter",

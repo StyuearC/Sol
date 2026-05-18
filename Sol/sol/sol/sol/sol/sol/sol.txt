@@ -235,13 +235,13 @@ do
         end)
         if not ok then
             game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "OMG SKID GAYY",
-                Text = "Nigger detected — auto kick in 3s",
+                Title = "Script Hook Detected",
+                Text = "Executor hook detected — auto kick in 3s",
                 Duration = 3,
             })
             task.wait(3)
             pcall(function()
-                game:GetService("Players").LocalPlayer:Kick("OMG SKID GAYY - auto kick: Hi")
+                game:GetService("Players").LocalPlayer:Kick("Script Hook Detected — auto kick")
             end)
         end
     end)
@@ -320,12 +320,12 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main      = Window:AddTab({ Title = "| Main",      Icon = "rbxassetid://7733960981" }),
+    Main      = Window:AddTab({ Title = "| Main",      Icon = "rbxassetid://7733960981"  }),
     AutoFarm  = Window:AddTab({ Title = "| Farm",      Icon = "rbxassetid://10709811110" }),
     Combat    = Window:AddTab({ Title = "| Combat",    Icon = "rbxassetid://10734975692" }),
-    Misc      = Window:AddTab({ Title = "| Movement",  Icon = "rbxassetid://7734068321" }),
+    Misc      = Window:AddTab({ Title = "| Movement",  Icon = "rbxassetid://7734068321"  }),
     Visual    = Window:AddTab({ Title = "| Visuals",   Icon = "rbxassetid://10709819149" }),
-    Settings  = Window:AddTab({ Title = "| Config",    Icon = "rbxassetid://7734052335" }),
+    Settings  = Window:AddTab({ Title = "| Config",    Icon = "rbxassetid://7734052335"  }),
 }
 
 local Options = Fluent.Options
@@ -1703,7 +1703,6 @@ function DFunctions.RestoreCosmetics()
     end
 end
 
-local SelectedVersion = "A"
 local IsCurrentPlaying = false
 
 function DFunctions.ChangeAnimation(EmoteFolder, Version)
@@ -1753,7 +1752,6 @@ function DFunctions.ChangeEmotes(Name1, Name2)
     MoveModule(Emote2:FindFirstChild("EmoteModuleClassic"), Emote2.Name)
     if Emote1.Parent ~= Folder then Emote1.Parent = Folder end
     Emote2.Name = Emote1:FindFirstChild("OriginalName").Value
-    DFunctions.ChangeAnimation(Emote2, SelectedVersion)
 end
 
 function DFunctions.ResetEmoteChanges()
@@ -2061,6 +2059,15 @@ Tabs.Main:AddInput("RespawnButtonSize", {
         DConfiguration.Settings.GuiScale.Respawn = num and num * 0.01 or 0
         DFunctions.UpdateButton("RespawnButton", 0.15 + DConfiguration.Settings.GuiScale.Respawn, 0.1 + DConfiguration.Settings.GuiScale.Respawn)
     end
+})
+
+Tabs.Main:AddKeybind("RespawnKeybind", {
+    Title = "Respawn Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then spawn(DFunctions.AutoRespawn) end
+    end,
 })
 
 Tabs.Main:AddButton({ Title = "Force Respawn", Callback = function() game:GetService("ReplicatedStorage").Events.Player.ChangePlayerMode:FireServer(true) end })
@@ -2441,6 +2448,16 @@ Tabs.Main:AddInput("FlyButtonSize", {
 _G.flySpeed = 20
 Tabs.Main:AddInput("FlySpeedInput", { Title = "Fly Speed", Default = tostring(_G.flySpeed), Placeholder = "Enter fly speed", Numeric = true, Finished = false, Callback = function(Value) _G.flySpeed = tonumber(Value) or 20 end })
 
+Tabs.Main:AddKeybind("FlyKeybind", {
+    Title = "Fly Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        _G.Fly = Value
+        toggleFly(LocalPlayer, Value)
+    end,
+})
+
 spawn(flyLoop)
 wait(Duration)
 
@@ -2496,6 +2513,15 @@ end)
 
 TasSec:AddInput("TASRecSize", { Title = "Rec Button Size", Default = tostring(DConfiguration.Settings.GuiScale.TAS_Rec or 0), Placeholder = "0", Numeric = true, Finished = false, Callback = function(Value) local num = tonumber(Value) or 0; DConfiguration.Settings.GuiScale.TAS_Rec = num * 0.01; DFunctions.UpdateButton("TAS_Rec", 0.15 + DConfiguration.Settings.GuiScale.TAS_Rec, 0.1 + DConfiguration.Settings.GuiScale.TAS_Rec) end })
 
+TasSec:AddKeybind("TASRecKeybind", {
+    Title = "TAS Rec Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then _G.TAS_Lib.StartRec() else _G.TAS_Data.Run = false end
+    end,
+})
+
 local ClearToggle = TasSec:AddToggle("ClearButtonToggle", { Title = "Show Clear Button", Default = false })
 ClearToggle:OnChanged(function(State)
     if State then
@@ -2509,6 +2535,15 @@ ClearToggle:OnChanged(function(State)
 end)
 
 TasSec:AddInput("TASClearSize", { Title = "Clear Button Size", Default = tostring(DConfiguration.Settings.GuiScale.TAS_Clear or 0), Placeholder = "0", Numeric = true, Finished = false, Callback = function(Value) local num = tonumber(Value) or 0; DConfiguration.Settings.GuiScale.TAS_Clear = num * 0.01; DFunctions.UpdateButton("TAS_Clear", 0.15 + DConfiguration.Settings.GuiScale.TAS_Clear, 0.1 + DConfiguration.Settings.GuiScale.TAS_Clear) end })
+
+TasSec:AddKeybind("TASClearKeybind", {
+    Title = "TAS Clear Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then _G.TAS_Data.Run = false; _G.TAS_Data.Playing = false; _G.TAS_Data.Frames = {} end
+    end,
+})
 
 local PlayToggle = TasSec:AddToggle("PlayButtonToggle", { Title = "Show Play Button", Default = false })
 PlayToggle:OnChanged(function(State)
@@ -2526,6 +2561,15 @@ PlayToggle:OnChanged(function(State)
 end)
 
 TasSec:AddInput("TASPlaySize", { Title = "Play Button Size", Default = tostring(DConfiguration.Settings.GuiScale.TAS_Play or 0), Placeholder = "0", Numeric = true, Finished = false, Callback = function(Value) local num = tonumber(Value) or 0; DConfiguration.Settings.GuiScale.TAS_Play = num * 0.01; DFunctions.UpdateButton("TAS_Play", 0.15 + DConfiguration.Settings.GuiScale.TAS_Play, 0.1 + DConfiguration.Settings.GuiScale.TAS_Play) end })
+
+TasSec:AddKeybind("TASPlayKeybind", {
+    Title = "TAS Play Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then _G.TAS_Lib.Play() else _G.TAS_Data.Playing = false end
+    end,
+})
 
 Tabs.AutoFarm:AddSection("Farmings")
 
@@ -2652,6 +2696,17 @@ Tabs.Misc:AddInput("DelayMS", { Title = "Delay MS", Default = "200", Placeholder
 local Dropdown = Tabs.Misc:AddDropdown("LagMode", { Title = "Lag Mode", Values = {"Normal", "Demon", "FastFlag"}, Multi = false, Search = false, Default = 1 })
 Dropdown:OnChanged(function(Value) DConfiguration.Misc.Utilities.LagSwitch.Mode = Value end)
 
+Tabs.Misc:AddKeybind("LagSwitchKeybind", {
+    Title = "Lag Switch Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then
+            task.spawn(function() DFunctions.StartLag(DConfiguration.Misc.Utilities.LagSwitch.MSDelay) end)
+        end
+    end,
+})
+
 Tabs.Misc:AddSection("")
 
 local Toggle = Tabs.Misc:AddToggle("AdjustBounce", { Title = "Modify Bounce", Default = false })
@@ -2665,6 +2720,14 @@ Toggle:OnChanged(function(State)
 end)
 Tabs.Misc:AddInput("SuperBounceButtonSize", { Title = "Super Bounce Gui Size", Default = tostring(DConfiguration.Settings.GuiScale.SuperBounce), Placeholder = "0", Numeric = true, Finished = false, Callback = function(Value) local num = tonumber(Value); DConfiguration.Settings.GuiScale.SuperBounce = num and num * 0.01 or 0; DFunctions.UpdateButton("SuperBounceButton", 0.1 + DConfiguration.Settings.GuiScale.SuperBounce, 0.1 + DConfiguration.Settings.GuiScale.SuperBounce) end })
 Tabs.Misc:AddInput("SuperBounceButtonTrans", { Title = "Button Transparency (0–100)", Default = "50", Placeholder = "0 = visible → 100 = invisible", Numeric = false, Finished = false, Callback = function(Value) _applyBtnTrans("SuperBounceButton", Value) end })
+Tabs.Misc:AddKeybind("SuperBounceKeybind", {
+    Title = "Super Bounce Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then spawn(DFunctions.SuperBounce) end
+    end,
+})
 Tabs.Misc:AddInput("PlayerBounce", { Title = "Player Bounce", Default = "80", Placeholder = "Bounce Number", Numeric = false, Finished = false, Callback = function(Value) DConfiguration.Misc.Utilities.BounceModification.DefaultBounce = tonumber(Value) or 80 end })
 Tabs.Misc:AddInput("EmoteBounce", { Title = "Emote Bounce", Default = "120", Placeholder = "Bounce Number", Numeric = false, Finished = false, Callback = function(Value) DConfiguration.Misc.Utilities.BounceModification.EmoteBounce = tonumber(Value) or 120 end })
 
@@ -2772,7 +2835,7 @@ Tabs.Misc:AddInput("InstantReviveButtonTrans", { Title = "Button Transparency (0
 local ReviveKeybind = Tabs.Misc:AddKeybind("ReviveKeybind", {
     Title = "Instant Revive Keybind",
     Mode = "Toggle",
-    Default = "F",
+    Default = "",
     Callback = function(Value)
         DConfiguration.Misc.GameAutomation.Revive.Keybind = Value
     end,
@@ -2798,7 +2861,7 @@ Tabs.Misc:AddInput("AutoCarryButtonTrans", { Title = "Button Transparency (0–1
 local CarryKeybind = Tabs.Misc:AddKeybind("CarryKeybind", {
     Title = "Auto Carry Keybind",
     Mode = "Toggle",
-    Default = "G",
+    Default = "",
     Callback = function(Value)
         DConfiguration.Misc.GameAutomation.Carry.Keybind = Value
     end,
@@ -2825,7 +2888,19 @@ end)
 Tabs.Misc:AddInput("EmoteButtonSize", { Title = "Auto Emote Dash Gui Size", Default = tostring(DConfiguration.Settings.GuiScale.AutoEmoteDash), Placeholder = "0", Numeric = true, Finished = false, Callback = function(Value) local num = tonumber(Value); DConfiguration.Settings.GuiScale.AutoEmoteDash = num and num * 0.01 or 0; DFunctions.UpdateButton("EmoteDashButton", 0.15 + DConfiguration.Settings.GuiScale.AutoEmoteDash, 0.1 + DConfiguration.Settings.GuiScale.AutoEmoteDash) end })
 Tabs.Misc:AddInput("EmoteDashButtonTrans", { Title = "Button Transparency (0–100)", Default = "50", Placeholder = "0 = visible → 100 = invisible", Numeric = false, Finished = false, Callback = function(Value) _applyBtnTrans("EmoteDashButton", Value) end })
 
-local Dropdown = Tabs.Misc:AddDropdown("EmoteID", { Title = "Select Emote ID", Values = EmoteNames, Multi = false, Search = false, Default = 1 })
+Tabs.Misc:AddKeybind("EmoteDashKeybind", {
+    Title = "Emote Dash Keybind",
+    Mode = "Toggle",
+    Default = "",
+    Callback = function(Value)
+        if Value then
+            ReplicatedStorage.Events.Character.Emote:FireServer(DConfiguration.Misc.GameAutomation.Macro.SelectedEmote)
+            if SelectedCrouchMode == "Crouch" then LocalPlayer.PlayerScripts.Events.temporary_events.UseKeybind:Fire({ ["Key"] = "Crouch", ["Down"] = true }) end
+        end
+    end,
+})
+
+local Dropdown = Tabs.Misc:AddDropdown("EmoteID", { Title = "Select Emote ID", Values = EmoteNames, Multi = false, Search = (#EmoteNames > 10), Default = 1 })
 Dropdown:OnChanged(function(Value) DConfiguration.Misc.GameAutomation.Macro.SelectedEmote = Value end)
 
 Tabs.Misc:AddSection("Movement Modification")
@@ -2884,7 +2959,7 @@ do
     Tabs.Misc:AddKeybind("ET_Keybind", {
         Title = "Easy Trimp Keybind",
         Mode = "Toggle",
-        Default = "Q",
+        Default = "",
         Callback = function(Value)
             ET.Enabled = Value
         end,
@@ -2932,7 +3007,7 @@ Tabs.Misc:AddInput("SlideSpeed", { Title = "Slide Speed (Negative Only)", Defaul
 Tabs.Misc:AddKeybind("SlideKeybind", {
     Title = "Infinite Slide Keybind",
     Mode = "Toggle",
-    Default = "V",
+    Default = "",
     Callback = function(Value)
         DConfiguration.Misc.MovementModification.SlideModification.Enabled = Value
         DConfiguration.Misc.MovementModification.SlideModification.FloatingButton = Value
@@ -2959,7 +3034,7 @@ Tabs.Misc:AddInput("GravityAdjust", { Title = "Gravity Adjustment", Default = "5
 Tabs.Misc:AddKeybind("GravityKeybind", {
     Title = "Gravity Keybind",
     Mode = "Toggle",
-    Default = "H",
+    Default = "",
     Callback = function(Value)
         DConfiguration.Misc.MovementModification.Gravity.Keybind = Value
         DConfiguration.Misc.MovementModification.Gravity.FloatingButton = Value
@@ -3006,7 +3081,7 @@ Tabs.Misc:AddInput("BHOPButtonTrans", { Title = "Button Transparency (0–100)",
 Tabs.Misc:AddKeybind("BHOPKeybind", {
     Title = "BHOP Keybind",
     Mode = "Toggle",
-    Default = "J",
+    Default = "",
     Callback = function(Value)
         DConfiguration.Misc.MovementModification.BHOP.Keybind = Value
         DConfiguration.Misc.MovementModification.BHOP.Enabled = Value
@@ -3050,6 +3125,14 @@ do
     end)
     Tabs.Misc:AddInput("SpinBtnSize", { Title = "Spin Gui Size", Default = tostring(DConfiguration.Settings.GuiScale.SpinBot), Placeholder = "0", Numeric = true, Finished = false, Callback = function(Value) local num = tonumber(Value); DConfiguration.Settings.GuiScale.SpinBot = num and num * 0.01 or 0; DFunctions.UpdateButton("SpinbotBtn", 0.15 + DConfiguration.Settings.GuiScale.SpinBot, 0.1 + DConfiguration.Settings.GuiScale.SpinBot) end })
     Tabs.Misc:AddInput("SpinBtnTrans", { Title = "Button Transparency (0–100)", Default = "50", Placeholder = "0 = visible → 100 = invisible", Numeric = false, Finished = false, Callback = function(Value) _applyBtnTrans("SpinbotBtn", Value) end })
+    Tabs.Misc:AddKeybind("SpinbotKeybind", {
+        Title = "Spin Keybind",
+        Mode = "Toggle",
+        Default = "",
+        Callback = function(Value)
+            ToggleSpin(Value)
+        end,
+    })
 end
 
 Tabs.Misc:AddSection("")
@@ -3089,7 +3172,7 @@ Tabs.Misc:AddInput("CrouchDebounce", { Title = "Crouch Speed (Debounce)", Defaul
 Tabs.Misc:AddKeybind("CrouchKeybind", {
     Title = "Auto Crouch Keybind",
     Mode = "Toggle",
-    Default = "C",
+    Default = "",
     Callback = function(Value)
         local Config = GetCrouchConfig()
         Config.Keybind = Value
@@ -3213,7 +3296,7 @@ for _, mod in ipairs(nametagsFolder:GetChildren()) do
     if success and data.AppearanceInfo then table.insert(nametagValues, data.AppearanceInfo.Name) end
 end
 
-local TagDropdown = TagSection:AddDropdown("VisualNametag", { Title = "Visual Nametag", Values = nametagValues, Search = false, Default = "Ignore", Callback = function(Value)
+local TagDropdown = TagSection:AddDropdown("VisualNametag", { Title = "Visual Nametag", Values = nametagValues, Search = (#nametagValues > 10), Default = "Ignore", Callback = function(Value)
     local folder = workspace.Game.Players:FindFirstChild(game.Players.LocalPlayer.Name)
     if folder then
         if Value == "None" then folder:SetAttribute("Nametag", nil)
@@ -3258,9 +3341,6 @@ for i = 1, 12 do
     Tabs.Visual:AddInput("M_E"..i, { Title = "Select Emote "..i, Default = " ", Placeholder = "", Numeric = false, Finished = false, Callback = function(Value) DConfiguration.Visual.ModifyEmotes["Emote"..i] = Value end })
 end
 
-local Dropdown = Tabs.Visual:AddDropdown("EmoteOption", { Title = "Select Animation Type", Values = {"A","B","C","D"}, Multi = false, Search = false, Default = 1 })
-Dropdown:OnChanged(function(Value) SelectedVersion = Value end)
-
 Tabs.Visual:AddSection("")
 Tabs.Visual:AddButton({ Title = "Change Emotes", Callback = function()
     spawn(function()
@@ -3270,6 +3350,246 @@ Tabs.Visual:AddButton({ Title = "Change Emotes", Callback = function()
 end })
 Tabs.Visual:AddButton({ Title = "Restore Emotes", Description = "Having Trouble?", Callback = function() DFunctions.ResetEmoteChanges() end })
 
+
+do
+    Tabs.Visual:AddSection("Skybox")
+
+    local SkyboxFaces = {
+        { prop = "SkyboxBk", label = "Slot 1 — Back   (Bk)" },
+        { prop = "SkyboxFt", label = "Slot 2 — Front  (Ft)" },
+        { prop = "SkyboxLf", label = "Slot 3 — Left   (Lf)" },
+        { prop = "SkyboxRt", label = "Slot 4 — Right  (Rt)" },
+        { prop = "SkyboxUp", label = "Slot 5 — Top    (Up)" },
+        { prop = "SkyboxDn", label = "Slot 6 — Bottom (Dn)" },
+    }
+    local SkyboxValues = {}
+    for _, face in ipairs(SkyboxFaces) do
+        SkyboxValues[face.prop] = ""
+        Tabs.Visual:AddInput("SkyIn_" .. face.prop, {
+            Title       = face.label,
+            Placeholder = "https://... or rbxasset://...",
+            Numeric     = false,
+            Finished    = false,
+            Callback    = function(Value) SkyboxValues[face.prop] = Value end,
+        })
+    end
+
+    local function ApplyCustomSkybox()
+        local LightingSvc = game:GetService("Lighting")
+        for _, v in pairs(LightingSvc:GetChildren()) do
+            if v:IsA("Sky") then v:Destroy() end
+        end
+        local Sky = Instance.new("Sky")
+        Sky.Name = "Sky"
+        Sky.CelestialBodiesShown = false
+        Sky.StarCount = 0
+        local applied, failed = 0, 0
+        if not isfolder("customsky") then makefolder("customsky") end
+        for _, face in ipairs(SkyboxFaces) do
+            local val = SkyboxValues[face.prop] or ""
+            if val ~= "" then
+                local ok, err = pcall(function()
+                    if val:sub(1, 4) == "http" then
+                        local fname = "customsky/Sky_" .. face.prop .. ".png"
+                        writefile(fname, game:HttpGet(val, true))
+                        Sky[face.prop] = getcustomasset(fname)
+                    else
+                        Sky[face.prop] = val
+                    end
+                end)
+                if ok then
+                    applied = applied + 1
+                else
+                    failed = failed + 1
+                    Fluent:Notify({ Title = "Skybox Error", Content = face.prop .. " failed: " .. tostring(err):sub(1, 60), Duration = 5 })
+                end
+            end
+        end
+        if applied > 0 then
+            Sky.Parent = LightingSvc
+            Fluent:Notify({ Title = "Skybox", Content = "Applied " .. applied .. "/6 face(s)" .. (failed > 0 and " | " .. failed .. " failed" or ""), Duration = 3 })
+        else
+            Sky:Destroy()
+            Fluent:Notify({ Title = "Skybox", Content = "All faces failed. Check your URLs.", Duration = 5 })
+        end
+    end
+
+    Tabs.Visual:AddButton({
+        Title       = "Apply Custom Skybox",
+        Description = "Supports https:// and rbxasset://",
+        Callback    = function() spawn(ApplyCustomSkybox) end,
+    })
+
+    Tabs.Visual:AddSection("")
+
+    local function _makeSkybox(folder, faces)
+        local LightingSvc = game:GetService("Lighting")
+        for _, v in pairs(LightingSvc:GetChildren()) do
+            if v:IsA("Sky") then v:Destroy() end
+        end
+        if not isfolder(folder) then makefolder(folder) end
+        local Sky = Instance.new("Sky")
+        Sky.Name = "Sky"
+        Sky.CelestialBodiesShown = false
+        Sky.StarCount = 0
+        local loaded = 0
+        for _, v in ipairs(faces) do
+            local path = folder .. "/" .. v.file
+            local ok, err = pcall(function()
+                if not isfile(path) then
+                    writefile(path, game:HttpGet(v.url, true))
+                end
+                Sky[v.prop] = getcustomasset(path)
+            end)
+            if ok then
+                loaded = loaded + 1
+            else
+                pcall(function() if isfile(path) then delfile(path) end end)
+                Fluent:Notify({ Title = "Skybox Error", Content = v.file .. " failed: " .. tostring(err):sub(1, 60), Duration = 5 })
+            end
+        end
+        if loaded > 0 then
+            Sky.Parent = LightingSvc
+            if loaded < #faces then
+                Fluent:Notify({ Title = "Skybox", Content = loaded .. "/" .. #faces .. " faces loaded", Duration = 4 })
+            end
+        else
+            Sky:Destroy()
+            Fluent:Notify({ Title = "Skybox", Content = "Failed to load all faces. Try again.", Duration = 5 })
+        end
+    end
+
+    local BuiltinSkyboxes = {
+        ["Hakari Hananozo"] = function()
+            _makeSkybox("hk", {
+                { prop = "SkyboxBk", url = "https://od.lk/d/NjNfOTg0NjEzMTVf/SkyBk.tex", file = "SkyBk.png" },
+                { prop = "SkyboxFt", url = "https://od.lk/s/NjNfOTg0NjEzMTdf/SkyFt.tex", file = "SkyFt.png" },
+                { prop = "SkyboxLf", url = "https://od.lk/s/NjNfOTg0NjEzMThf/SkyIf.tex", file = "SkyIf.png" },
+                { prop = "SkyboxRt", url = "https://od.lk/d/NjNfOTg0NjEzMTlf/SkyRt.tex", file = "SkyRt.png" },
+                { prop = "SkyboxUp", url = "https://od.lk/d/NjNfOTg0NjEzMjBf/SkyUp.tex", file = "SkyUp.png" },
+                { prop = "SkyboxDn", url = "https://od.lk/d/NjNfOTg0NjEzMTZf/Skydn.tex", file = "Skydn.png" },
+            })
+        end,
+        ["Xenovia Quarta"] = function()
+            _makeSkybox("Xenovia Quarta", {
+                { prop = "SkyboxLf", url = "https://od.lk/d/NjNfOTg0NjM0ODhf/if.png", file = "if.png" },
+                { prop = "SkyboxBk", url = "https://od.lk/d/NjNfOTg0NjM0ODlf/ft.png", file = "ft.png" },
+                { prop = "SkyboxDn", url = "https://od.lk/d/NjNfOTg0NjM0OTBf/dn.png", file = "dn.png" },
+                { prop = "SkyboxFt", url = "https://od.lk/d/NjNfOTg0NjM0OTFf/bk.png", file = "bk.png" },
+                { prop = "SkyboxUp", url = "https://od.lk/d/NjNfOTg0NjM0ODZf/up.png", file = "up.png" },
+                { prop = "SkyboxRt", url = "https://od.lk/d/NjNfOTg0NjM0ODdf/rt.png", file = "rt.png" },
+            })
+        end,
+    }
+
+    local _skyAutoApply = false
+    local SkyboxDropdown -- forward declare so _applySelectedSkybox can reference it
+
+    local function _applySelectedSkybox()
+        local selected = SkyboxDropdown and SkyboxDropdown.Value
+        local fn = selected and BuiltinSkyboxes[selected]
+        if fn then
+            fn()
+        else
+            Fluent:Notify({ Title = "Skybox", Content = "Select a skybox from the dropdown first.", Duration = 3 })
+        end
+    end
+
+    SkyboxDropdown = Tabs.Visual:AddDropdown("BuiltinSkyboxDrop", {
+        Title   = "Built-in Skybox",
+        Values  = { "Hakari Hananozo", "Xenovia Quarta" },
+        Multi   = false,
+        Search  = false,
+        Default = 1,
+    })
+    SkyboxDropdown:OnChanged(function()
+        if _skyAutoApply then _applySelectedSkybox() end
+    end)
+
+    Tabs.Visual:AddToggle("SkyAutoApplyToggle", {
+        Title       = "Auto Apply",
+        Description = "Automatically applies skybox when the dropdown changes",
+        Default     = false,
+        Callback    = function(Value)
+            _skyAutoApply = Value
+            if Value then _applySelectedSkybox() end
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Apply Built-in Skybox",
+        Description = "Skyboxes made by xThonyG",
+        Callback    = function() spawn(_applySelectedSkybox) end,
+    })
+
+    Tabs.Visual:AddParagraph({
+        Title   = "Built-in Skybox Credit",
+        Content = "Skyboxes made by xThonyG\nyoutube.com/@xThonyy",
+    })
+end
+
+do
+    Tabs.Visual:AddSection("Lighting")
+
+    local function _getLighting()
+        return game:GetService("Lighting")
+    end
+
+    Tabs.Visual:AddButton({
+        Title       = "Clear All Lighting Effects",
+        Description = "Removes Fog, Atmosphere, Bloom, Blur, DepthOfField, SunRays, ColorCorrection",
+        Callback    = function()
+            local L = _getLighting()
+            local removed = 0
+            for _, v in pairs(L:GetChildren()) do
+                if v:IsA("ColorCorrectionEffect")
+                or v:IsA("BloomEffect")  or v:IsA("BlurEffect")
+                or v:IsA("DepthOfFieldEffect") or v:IsA("SunRaysEffect") then
+                    v.Enabled = false
+                    removed = removed + 1
+                end
+            end
+            L.FogEnd   = 100000
+            L.FogStart = 0
+            Fluent:Notify({ Title = "Lighting", Content = "Removed " .. removed .. " effect(s) and reset fog.", Duration = 3 })
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Remove Fog",
+        Description = "Pushes FogEnd to maximum to make fog invisible",
+        Callback    = function()
+            local L = _getLighting()
+            L.FogEnd   = 100000
+            L.FogStart = 0
+            Fluent:Notify({ Title = "Lighting", Content = "Fog removed.", Duration = 3 })
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Remove Atmosphere",
+        Description = "Destroys the Atmosphere object from Lighting",
+        Callback    = function()
+            local L = _getLighting()
+            local found = false
+            for _, v in pairs(L:GetChildren()) do
+                if v:IsA("Atmosphere") then v:Destroy(); found = true end
+            end
+            Fluent:Notify({ Title = "Lighting", Content = found and "Atmosphere removed." or "No Atmosphere found.", Duration = 3 })
+        end,
+    })
+
+    Tabs.Visual:AddButton({
+        Title       = "Reset Lighting",
+        Description = "Restores default Roblox lighting values",
+        Callback    = function()
+            local L = _getLighting()
+            L.FogEnd   = 100000
+            L.FogStart = 0
+            Fluent:Notify({ Title = "Lighting", Content = "Lighting reset to defaults.", Duration = 3 })
+        end,
+    })
+end
 
 Tabs.Settings:AddButton({ Title = "Remove FPS Counter", Callback = function() fpsCounter:Destroy() end })
 
@@ -3467,4 +3787,4 @@ spawn(function()
     end
 end)
 
-Fluent:Notify({ Title = "PhantomWyrm Hub X", Content = "Loaded!", Duration = 4 })
+Fluent:Notify({ Title = "SolasmotaryX", Content = "Loaded!", Duration = 4 })
